@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>端午安康 · 岁岁欢喜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #cfe9df 0%, #b8d9c9 40%, #e2f0ea 100%);
+            font-family: -apple-system, 'Helvetica Neue', 'Segoe UI', 'Noto Sans CJK SC', system-ui, 'Apple Color Emoji', 'BlinkMacSystemFont', sans-serif;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 漂浮物容器 */
+        .floating-container,
+        .petals-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            overflow: hidden;
+        }
+        .petals-container {
+            z-index: 10;
+        }
+
+        /* 鼠标光晕 */
+        .mouse-glow {
+            position: fixed;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(200, 245, 210, 0.35) 0%, rgba(170, 225, 190, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            transition: transform 0.05s ease-out;
+            filter: blur(12px);
+            will-change: left, top;
+        }
+
+        /* 主卡片 */
+        .content-card {
+            position: relative;
+            z-index: 30;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            backdrop-filter: blur(1px);
+        }
+
+        .blessing-panel {
+            background: rgba(255, 255, 245, 0.7);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 64px 48px 80px 56px;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 20px 35px rgba(60, 80, 50, 0.2), inset 0 1px 4px rgba(255, 255, 220, 0.8);
+            border: 1px solid rgba(210, 235, 210, 0.6);
+            max-width: 640px;
+            width: 100%;
+        }
+
+        .main-title {
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #2b5b3c;
+            text-shadow: 2px 2px 6px rgba(140, 180, 130, 0.3);
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sub {
+            font-size: 0.9rem;
+            color: #5a8268;
+            margin-bottom: 1rem;
+        }
+
+        .nickname-area {
+            margin: 0.8rem 0 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .nickname-label {
+            font-size: 1rem;
+            color: #3a674a;
+            font-weight: 500;
+            background: rgba(230, 250, 230, 0.8);
+            padding: 0.3rem 0.8rem;
+            border-radius: 40px;
+        }
+        .nickname-input {
+            background: #feffef;
+            border: 1px solid #a2c4ae;
+            border-radius: 60px;
+            padding: 0.55rem 1rem;
+            font-size: 1rem;
+            width: 160px;
+            text-align: center;
+            color: #2f5d3c;
+            font-weight: 500;
+            outline: none;
+            transition: 0.2s;
+            font-family: inherit;
+            -webkit-appearance: none;
+        }
+        .nickname-input:focus {
+            border-color: #6f9e7c;
+            box-shadow: 0 0 0 3px rgba(100, 150, 110, 0.2);
+            background: #ffffff;
+        }
+
+        .blessing-text {
+            margin: 1.5rem 0 1rem;
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #2d4d37;
+            background: rgba(245, 255, 240, 0.65);
+            padding: 1rem 1.2rem;
+            border-radius: 48px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .dynamic-bless {
+            min-height: 95px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: gentleFadeUp 0.85s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+        }
+        .bless-pop {
+            animation: blessPop 0.4s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+        }
+        @keyframes blessPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.02); background: rgba(255, 250, 210, 0.85); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .zongzi-btn {
+            margin-top: 1.5rem;
+            background: #f7b05e;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3e2b;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(100, 70, 20, 0.2);
+            transition: transform 0.18s, background 0.2s;
+            font-family: inherit;
+            background: linear-gradient(135deg, #ffcd7e, #ffb347);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .zongzi-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* 漂浮动画 */
+        .float-item {
+            position: absolute;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.05));
+            z-index: 6;
+            will-change: transform;
+        }
+        @keyframes floatSoft {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-30px) rotate(7deg); }
+        }
+        @keyframes floatSoftReverse {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(28px) rotate(-6deg); }
+        }
+        @keyframes swayRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(10deg); }
+        }
+        .float-1 { animation: floatSoft 5.2s ease-in-out infinite alternate; }
+        .float-2 { animation: floatSoftReverse 7s ease-in-out infinite alternate; }
+        .float-3 { animation: floatSoft 6.8s ease-in-out infinite alternate-reverse; }
+        .float-4 { animation: swayRotate 4.5s ease-in-out infinite alternate; }
+
+        /* 花瓣 */
+        @keyframes fallDown {
+            0% {
+                transform: translateY(-20vh) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(110vh) rotate(420deg);
+                opacity: 0;
+            }
+        }
+        .petal {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform;
+            z-index: 12;
+            animation: fallDown linear forwards;
+        }
+
+        /* 弹出粽子动画 - 可爱且消失速度适中 */
+        .pop-zongzi {
+            position: fixed;
+            z-index: 200;
+            pointer-events: none;
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.2));
+            animation: popAndFlyCute 1.4s cubic-bezier(0.2, 0.9, 0.4, 1.2) forwards;
+        }
+        @keyframes popAndFlyCute {
+            0% {
+                transform: scale(0.2) translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                transform: scale(1.2) translateY(-12px) rotate(8deg);
+                opacity: 1;
+            }
+            45% {
+                transform: scale(1.05) translateY(-40px) rotate(-2deg);
+                opacity: 1;
+            }
+            75% {
+                transform: scale(0.98) translateY(-85px) rotate(6deg);
+                opacity: 0.95;
+            }
+            100% {
+                transform: scale(0.65) translateY(-160px) rotate(12deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes gentleFadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 550px) {
+            .main-title { font-size: 1.9rem; }
+            .blessing-text { font-size: 1rem; padding: 0.8rem 1rem; }
+            .content-card { padding: 1.2rem 1rem; }
+            .blessing-panel { padding: 1.5rem 1.2rem; }
+            .nickname-input { width: 130px; font-size: 0.9rem; }
+            .zongzi-btn { padding: 10px 22px; font-size: 1rem; }
+        }
+        .footer-soft {
+            margin-top: 1.5rem;
+            font-size: 0.7rem;
+            color: #5b7e69;
+            background: rgba(230, 245, 220, 0.6);
+            border-radius: 30px;
+            display: inline-block;
+            padding: 0.3rem 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mouse-glow" id="mouseGlow"></div>
+<div class="floating-container" id="floatingContainer"></div>
+<div class="petals-container" id="petalsContainer"></div>
+
+<div class="content-card">
+    <div class="blessing-panel">
+        <h1 class="main-title">端午安康，岁岁欢喜</h1>
+        <div class="sub">🌿 粽香沁心，清风拂面 🌿</div>
+        <div class="nickname-area">
+            <span class="nickname-label">致</span>
+            <input type="text" id="nicknameInput" class="nickname-input" placeholder="她的名字" value="刘非凡" maxlength="12">
+        </div>
+        <div class="blessing-text" id="blessingText">
+            <div class="dynamic-bless" id="dynamicBless">
+                青青粽叶裹着想念，软糯香甜藏着祝愿。<br>
+                愿你的日子像糯米一样温暖，心情像艾草一样清欢。
+            </div>
+        </div>
+        <button class="zongzi-btn" id="popZongziBtn">
+            🎋 戳我送个粽子 🎋
+        </button>
+        <div class="footer-soft">
+            🌼 柔风拂面，端午安康 🌼
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 漂浮艾草 & 背景粽子装饰 SVG ----------
+        const floatingContainer = document.getElementById('floatingContainer');
+
+        function createWormwoodSVG(size = 44) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 50 50");
+            svg.setAttribute("width", size);
+            svg.setAttribute("height", size);
+            const leaf1 = document.createElementNS(svgNS, "path");
+            leaf1.setAttribute("d", "M25,10 C30,5 38,12 33,20 C28,25 22,20 25,10Z");
+            leaf1.setAttribute("fill", "#6f9e5c");
+            leaf1.setAttribute("opacity", "0.85");
+            const leaf2 = document.createElementNS(svgNS, "path");
+            leaf2.setAttribute("d", "M25,12 C18,6 12,14 18,22 C22,26 27,22 25,12Z");
+            leaf2.setAttribute("fill", "#7ea96b");
+            leaf2.setAttribute("opacity", "0.9");
+            const leaf3 = document.createElementNS(svgNS, "path");
+            leaf3.setAttribute("d", "M28,18 C36,18 40,26 32,30 C26,33 24,26 28,18Z");
+            leaf3.setAttribute("fill", "#88b172");
+            leaf3.setAttribute("opacity", "0.8");
+            const stem = document.createElementNS(svgNS, "path");
+            stem.setAttribute("d", "M24,24 L24,42");
+            stem.setAttribute("stroke", "#5b8c4c");
+            stem.setAttribute("stroke-width", "2");
+            stem.setAttribute("fill", "none");
+            svg.appendChild(leaf1);
+            svg.appendChild(leaf2);
+            svg.appendChild(leaf3);
+            svg.appendChild(stem);
+            return svg;
+        }
+
+        function createBgZongziSVG(size = 46) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 50 50");
+            svg.setAttribute("width", size);
+            svg.setAttribute("height", size);
+            const body = document.createElementNS(svgNS, "path");
+            body.setAttribute("d", "M25,8 L38,32 L12,32 Z");
+            body.setAttribute("fill", "#b7cf8c");
+            body.setAttribute("stroke", "#8aa96a");
+            body.setAttribute("stroke-width", "1.2");
+            const belt = document.createElementNS(svgNS, "path");
+            belt.setAttribute("d", "M25,8 L25,32 M16,20 L34,20 M19,12 L31,28");
+            belt.setAttribute("stroke", "#c98f4b");
+            belt.setAttribute("stroke-width", "2");
+            belt.setAttribute("fill", "none");
+            const leafDecor = document.createElementNS(svgNS, "path");
+            leafDecor.setAttribute("d", "M30,28 Q36,31 32,36 Q27,33 30,28Z");
+            leafDecor.setAttribute("fill", "#7fa85c");
+            svg.appendChild(body);
+            svg.appendChild(belt);
+            svg.appendChild(leafDecor);
+            return svg;
+        }
+
+        function getRandom(min, max) {
+            return min + Math.random() * (max - min);
+        }
+
+        function initFloatingElements() {
+            if (!floatingContainer) return;
+            floatingContainer.innerHTML = '';
+            const wormwoodCount = 6;
+            for (let i = 0; i < wormwoodCount; i++) {
+                const size = getRandom(38, 56);
+                const svgEl = createWormwoodSVG(size);
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('float-item');
+                const animClass = `float-${Math.floor(Math.random() * 3) + 1}`;
+                wrapper.classList.add(animClass);
+                wrapper.style.left = `${getRandom(2, 92)}%`;
+                wrapper.style.top = `${getRandom(3, 88)}%`;
+                wrapper.style.opacity = 0.75;
+                wrapper.style.width = `${size}px`;
+                wrapper.style.height = `${size}px`;
+                wrapper.appendChild(svgEl);
+                floatingContainer.appendChild(wrapper);
+            }
+            for (let i = 0; i < 5; i++) {
+                const size = getRandom(42, 58);
+                const svgEl = createBgZongziSVG(size);
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('float-item');
+                const animClass = `float-${Math.floor(Math.random() * 4) + 1}`;
+                wrapper.classList.add(animClass);
+                wrapper.style.left = `${getRandom(1, 94)}%`;
+                wrapper.style.top = `${getRandom(5, 85)}%`;
+                wrapper.style.opacity = 0.8;
+                wrapper.style.width = `${size}px`;
+                wrapper.style.height = `${size}px`;
+                wrapper.appendChild(svgEl);
+                floatingContainer.appendChild(wrapper);
+            }
+            for (let i = 0; i < 3; i++) {
+                const size = getRandom(32, 44);
+                const svgEl = createWormwoodSVG(size);
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('float-item');
+                wrapper.classList.add(`float-${Math.floor(Math.random() * 2) + 1}`);
+                wrapper.style.left = `${getRandom(3, 96)}%`;
+                wrapper.style.top = `${getRandom(8, 92)}%`;
+                wrapper.style.opacity = 0.65;
+                wrapper.style.width = `${size}px`;
+                wrapper.style.height = `${size}px`;
+                wrapper.appendChild(svgEl);
+                floatingContainer.appendChild(wrapper);
+            }
+        }
+
+        // 花瓣系统
+        const petalsContainer = document.getElementById('petalsContainer');
+        let petalInterval = null;
+
+        function createPetal() {
+            const petalDiv = document.createElement('div');
+            petalDiv.classList.add('petal');
+            const type = Math.floor(Math.random() * 3);
+            if (type === 0) {
+                petalDiv.style.width = '14px';
+                petalDiv.style.height = '14px';
+                petalDiv.style.background = '#f6cfcf';
+                petalDiv.style.borderRadius = '80% 0 80% 0';
+                petalDiv.style.transform = `rotate(${Math.random() * 360}deg)`;
+                petalDiv.style.backgroundColor = '#ffc8c2';
+            } else if (type === 1) {
+                petalDiv.style.width = '12px';
+                petalDiv.style.height = '18px';
+                petalDiv.style.background = '#f9d5e0';
+                petalDiv.style.borderRadius = '50% 50% 40% 40%';
+                petalDiv.style.transform = `rotate(${Math.random() * 360}deg)`;
+                petalDiv.style.opacity = '0.8';
+            } else {
+                petalDiv.style.width = '10px';
+                petalDiv.style.height = '16px';
+                petalDiv.style.background = '#ffedd5';
+                petalDiv.style.borderRadius = '30% 70% 50% 50%';
+                petalDiv.style.transform = `rotate(${Math.random() * 360}deg)`;
+            }
+            const startLeft = Math.random() * window.innerWidth;
+            const duration = 5 + Math.random() * 6;
+            petalDiv.style.left = `${startLeft}px`;
+            petalDiv.style.top = '-20px';
+            petalDiv.style.animationDuration = `${duration}s`;
+            petalsContainer.appendChild(petalDiv);
+            petalDiv.addEventListener('animationend', () => {
+                if (petalDiv && petalDiv.remove) petalDiv.remove();
+            });
+            setTimeout(() => {
+                if (petalDiv && petalDiv.remove) petalDiv.remove();
+            }, duration * 1000 + 400);
+        }
+
+        function startPetals() {
+            if (petalInterval) clearInterval(petalInterval);
+            petalInterval = setInterval(() => {
+                if (petalsContainer && petalsContainer.children.length < 35) {
+                    createPetal();
+                }
+            }, 700);
+        }
+
+        // 祝福语库 (温柔治愈，无暧昧)
+        const nicknameInput = document.getElementById('nicknameInput');
+        const dynamicBlessDiv = document.getElementById('dynamicBless');
+        const blessingTextDiv = document.querySelector('.blessing-text');
+
+        const blessLibrary = [
+            (name) => `青青粽叶裹着想念，软糯香甜藏着祝愿。愿${name}的日子像糯米一样温暖，心情像艾草一样清欢。`,
+            (name) => `五月五，是端午。${name}，愿这世间所有的美好，都像粽叶紧紧包裹着你，甜甜糯糯，欢喜常伴。`,
+            (name) => `艾草悠悠，龙舟竞渡，所有的祝福都藏进粽子送给你，${name}，你要岁岁平安，年年康健，万事胜意～`,
+            (name) => `把最柔软的心意包进粽叶，愿${name}尝到的每一口都是甜蜜与惊喜。端午安康，幸运接“粽”而来！`,
+            (name) => `清风带去我的祝福，糯米黏住你的幸福。${name}，祝你端午安康，眼底有星河，心中有花香。`,
+            (name) => `粽叶飘香，情意绵长。${name}，愿你粽享欢乐，被世界温柔以待，每一天都闪闪发光✨`,
+            (name) => `一枚粽子，一份甜糯，${name}，所有的安康与美好都包裹其中，祝你笑靥如花，岁岁欢愉。`,
+            (name) => `艾草悬门，粽香入梦，${name}，愿你的日子如糯米般甜蜜，身体如龙舟般矫健，端午安康。`
+        ];
+
+        // 移除节流锁，确保每次点击都会更新祝福语
+        function updateBlessingText() {
+            let nickname = nicknameInput.value.trim();
+            if (nickname === "") nickname = "朋友";
+            const randomIndex = Math.floor(Math.random() * blessLibrary.length);
+            const blessMsg = blessLibrary[randomIndex](nickname);
+            dynamicBlessDiv.innerHTML = blessMsg.replace(/\n/g, '<br>');
+            if (blessingTextDiv) {
+                blessingTextDiv.classList.remove('bless-pop');
+                void blessingTextDiv.offsetWidth;
+                blessingTextDiv.classList.add('bless-pop');
+                setTimeout(() => {
+                    if (blessingTextDiv) blessingTextDiv.classList.remove('bless-pop');
+                }, 400);
+            }
+        }
+
+        nicknameInput.addEventListener('input', () => {
+            updateBlessingText();
+        });
+
+        // ---------- 可爱粽子 (带表情、蝴蝶结、粽叶纹理) ----------
+        function createCutePopZongzi(x, y) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 100 100");
+            svg.setAttribute("width", "68");
+            svg.setAttribute("height", "68");
+
+            // 底部粽叶（深绿底）
+            const leafBack = document.createElementNS(svgNS, "path");
+            leafBack.setAttribute("d", "M50,15 L78,52 L50,85 L22,52 Z");
+            leafBack.setAttribute("fill", "#5b8c4e");
+            leafBack.setAttribute("stroke", "#3c6b2f");
+            leafBack.setAttribute("stroke-width", "1.2");
+
+            // 糯米主体 (米黄色)
+            const riceBody = document.createElementNS(svgNS, "path");
+            riceBody.setAttribute("d", "M50,22 L73,54 L50,78 L27,54 Z");
+            riceBody.setAttribute("fill", "#f9e3a0");
+            riceBody.setAttribute("stroke", "#e2bc7c");
+            riceBody.setAttribute("stroke-width", "1");
+
+            // 高光部分
+            const highlight = document.createElementNS(svgNS, "path");
+            highlight.setAttribute("d", "M50,28 L65,52 L50,70 L35,52 Z");
+            highlight.setAttribute("fill", "#fff2cf");
+            highlight.setAttribute("opacity", "0.55");
+
+            // 可爱眼睛 (圆圆的)
+            const leftEye = document.createElementNS(svgNS, "circle");
+            leftEye.setAttribute("cx", "40");
+            leftEye.setAttribute("cy", "54");
+            leftEye.setAttribute("r", "4");
+            leftEye.setAttribute("fill", "#4a2e1e");
+
+            const rightEye = document.createElementNS(svgNS, "circle");
+            rightEye.setAttribute("cx", "60");
+            rightEye.setAttribute("cy", "54");
+            rightEye.setAttribute("r", "4");
+            rightEye.setAttribute("fill", "#4a2e1e");
+
+            // 眼睛高光
+            const leftSpark = document.createElementNS(svgNS, "circle");
+            leftSpark.setAttribute("cx", "38.5");
+            leftSpark.setAttribute("cy", "52");
+            leftSpark.setAttribute("r", "1.5");
+            leftSpark.setAttribute("fill", "#ffffff");
+
+            const rightSpark = document.createElementNS(svgNS, "circle");
+            rightSpark.setAttribute("cx", "58.5");
+            rightSpark.setAttribute("cy", "52");
+            rightSpark.setAttribute("r", "1.5");
+            rightSpark.setAttribute("fill", "#ffffff");
+
+            // 微笑小嘴
+            const smile = document.createElementNS(svgNS, "path");
+            smile.setAttribute("d", "M44,64 Q50,70 56,64");
+            smile.setAttribute("stroke", "#b45f2b");
+            smile.setAttribute("stroke-width", "2.2");
+            smile.setAttribute("fill", "none");
+            smile.setAttribute("stroke-linecap", "round");
+
+            // 红色绳结 (十字)
+            const rope1 = document.createElementNS(svgNS, "line");
+            rope1.setAttribute("x1", "50");
+            rope1.setAttribute("y1", "22");
+            rope1.setAttribute("x2", "50");
+            rope1.setAttribute("y2", "78");
+            rope1.setAttribute("stroke", "#d84c3c");
+            rope1.setAttribute("stroke-width", "2.5");
+
+            const rope2 = document.createElementNS(svgNS, "line");
+            rope2.setAttribute("x1", "27");
+            rope2.setAttribute("y1", "54");
+            rope2.setAttribute("x2", "73");
+            rope2.setAttribute("y2", "54");
+            rope2.setAttribute("stroke", "#d84c3c");
+            rope2.setAttribute("stroke-width", "2.5");
+
+            // 蝴蝶结装饰
+            const bowLeft = document.createElementNS(svgNS, "path");
+            bowLeft.setAttribute("d", "M44,19 Q34,10 40,25 Q42,28 48,22 Z");
+            bowLeft.setAttribute("fill", "#e63e2e");
+            const bowRight = document.createElementNS(svgNS, "path");
+            bowRight.setAttribute("d", "M56,19 Q66,10 60,25 Q58,28 52,22 Z");
+            bowRight.setAttribute("fill", "#e63e2e");
+            const bowCenter = document.createElementNS(svgNS, "circle");
+            bowCenter.setAttribute("cx", "50");
+            bowCenter.setAttribute("cy", "21");
+            bowCenter.setAttribute("r", "4");
+            bowCenter.setAttribute("fill", "#c03424");
+
+            // 顶部绿叶
+            const topLeaf = document.createElementNS(svgNS, "path");
+            topLeaf.setAttribute("d", "M50,10 Q56,2 62,8 Q56,12 50,10 Z");
+            topLeaf.setAttribute("fill", "#6ea04d");
+
+            svg.appendChild(leafBack);
+            svg.appendChild(riceBody);
+            svg.appendChild(highlight);
+            svg.appendChild(leftEye);
+            svg.appendChild(rightEye);
+            svg.appendChild(leftSpark);
+            svg.appendChild(rightSpark);
+            svg.appendChild(smile);
+            svg.appendChild(rope1);
+            svg.appendChild(rope2);
+            svg.appendChild(bowLeft);
+            svg.appendChild(bowRight);
+            svg.appendChild(bowCenter);
+            svg.appendChild(topLeaf);
+
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('pop-zongzi');
+            wrapper.style.left = `${x}px`;
+            wrapper.style.top = `${y}px`;
+            wrapper.style.position = 'fixed';
+            wrapper.appendChild(svg);
+            document.body.appendChild(wrapper);
+
+            wrapper.addEventListener('animationend', () => {
+                if (wrapper && wrapper.remove) wrapper.remove();
+            });
+            setTimeout(() => {
+                if (wrapper && wrapper.remove) wrapper.remove();
+            }, 1600);
+        }
+
+        // 点击交互：每次点击都会更新祝福语，不再有锁导致漏更
+        const popBtn = document.getElementById('popZongziBtn');
+        let pendingClick = false; // 仅用于防止动画重叠，但不影响祝福语更新
+
+        function onPopZongzi(e) {
+            // 防止快速连续点击产生过多粽子动画，但祝福语每次都会更新
+            if (pendingClick) {
+                // 如果正在播放粽子动画，仍然更新祝福语，但不生成新的粽子
+                updateBlessingText();
+                return;
+            }
+            pendingClick = true;
+
+            e.stopPropagation();
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+                if (e.cancelable) e.preventDefault();
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            // 弹出两个可爱粽子
+            createCutePopZongzi(clientX - 20, clientY - 18);
+            setTimeout(() => {
+                createCutePopZongzi(clientX + 18, clientY - 12);
+            }, 60);
+
+            // 每次点击都更新祝福语
+            updateBlessingText();
+
+            popBtn.style.transform = 'scale(0.94)';
+            setTimeout(() => {
+                popBtn.style.transform = '';
+                setTimeout(() => { pendingClick = false; }, 400);
+            }, 150);
+        }
+
+        popBtn.addEventListener('click', onPopZongzi);
+        popBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            onPopZongzi(e);
+        });
+
+        // 光晕跟随
+        const glow = document.getElementById('mouseGlow');
+        function updateGlowPosition(x, y) {
+            if (glow) {
+                glow.style.left = `${x}px`;
+                glow.style.top = `${y}px`;
+            }
+        }
+        function onPointerMove(e) {
+            let clientX, clientY;
+            if (e.touches) {
+                if (e.touches.length) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else return;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            updateGlowPosition(clientX, clientY);
+        }
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('touchmove', onPointerMove);
+        window.addEventListener('touchstart', onPointerMove);
+
+        // 页面启动
+        window.addEventListener('load', () => {
+            initFloatingElements();
+            startPetals();
+            updateBlessingText();
+
+            // 自动淡入祝福语小弹窗
+            const autoBless = document.createElement('div');
+            autoBless.innerText = '🌿 端午安康，喜乐相伴 🌿';
+            autoBless.style.position = 'fixed';
+            autoBless.style.bottom = '22%';
+            autoBless.style.left = '50%';
+            autoBless.style.transform = 'translateX(-50%)';
+            autoBless.style.backgroundColor = 'rgba(250, 250, 225, 0.92)';
+            autoBless.style.padding = '8px 20px';
+            autoBless.style.borderRadius = '60px';
+            autoBless.style.fontSize = '0.9rem';
+            autoBless.style.fontWeight = '500';
+            autoBless.style.color = '#3c6e47';
+            autoBless.style.zIndex = '180';
+            autoBless.style.backdropFilter = 'blur(8px)';
+            autoBless.style.webkitBackdropFilter = 'blur(8px)';
+            autoBless.style.pointerEvents = 'none';
+            autoBless.style.opacity = '0';
+            autoBless.style.transition = 'opacity 0.6s ease';
+            autoBless.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+            autoBless.style.whiteSpace = 'nowrap';
+            document.body.appendChild(autoBless);
+            setTimeout(() => { autoBless.style.opacity = '1'; }, 300);
+            setTimeout(() => { autoBless.style.opacity = '0'; setTimeout(() => autoBless.remove(), 700); }, 2800);
+        });
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                initFloatingElements();
+            }, 260);
+        });
+
+        document.querySelectorAll('.zongzi-btn').forEach(el => {
+            el.addEventListener('contextmenu', (e) => e.preventDefault());
+        });
+    })();
+</script>
+</body>
+</html>
